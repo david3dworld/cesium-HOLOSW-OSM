@@ -1,0 +1,113 @@
+body {
+	margin: 0;
+	background-color: #000;
+	color: #fff;
+	font-family: Monospace;
+	font-size: 13px;
+	line-height: 24px;
+}
+
+a {
+	color: #ff0;
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+button {
+	cursor: pointer;
+	text-transform: uppercase;
+}
+
+canvas {
+	display: block;
+}
+
+#info {
+	position: absolute;
+	top: 0px;
+	width: 100%;
+	padding: 10px;
+	box-sizing: border-box;
+	text-align: center;
+	z-index: 1; /* TODO Solve this in HTML */
+}
+
+.dg.ac {
+	z-index: 2 !important; /* TODO Solve this in HTML */
+}
+
+
+
+
+.setting_trigger {
+    position: fixed;
+    right: 15px;
+    top: 15px;
+    padding: 5px 12px;
+    border: 1px solid #f2e9ce;
+    cursor: pointer;
+}
+
+.confi_wrap li {
+    list-style: none;
+}
+
+.confi_wrap {
+    position: fixed;
+    right: 15px;
+    width: 162px;
+    background: rgb(130, 162, 212);
+    top: 50px;
+    display: none;
+    cursor: pointer;
+}
+
+.changer_wrap {
+    border-bottom: 1px solid #444;
+}
+
+.changer_wrap > a {
+    font-size: 15px;
+    padding: 5px;
+    background: rgba(255, 255, 255, 0.21);
+    width: 100%;
+    display: inline-block;
+    text-align: center;
+    box-shadow: 0 20px 8px -9px rgba(0, 0, 0, 0.35);
+    color: #fff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.changer_wrap ul {
+    padding: 0;
+    text-align: center;
+    margin: 0 0 10px;
+    /* display: none; */
+}
+
+.changer_wrap ul a {
+    width: 100%;
+    display: inline-block;
+    color: #fff;
+    opacity: 0.7;
+    transition-duration: 0.3s;
+    box-shadow: 0 6px 9px -11px;
+}
+
+.changer_wrap ul a:hover {
+    text-decoration: none;
+    opacity: 1;
+    text-shadow: 0 2px 2px rgba(0,0,0,0.8);
+    box-shadow: 0 8px 5px -10px;
+}
+.setting_trigger
+{
+    display:none;
+    
+}

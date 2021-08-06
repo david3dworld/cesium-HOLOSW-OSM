@@ -57,15 +57,16 @@
         // How to use the 3D Tiles Styling language to style individual features, like buildings.
         // Styling language specification: https://github.com/CesiumGS/3d-tiles/tree/master/specification/Styling
         var viewer = new Cesium.Viewer("cesiumContainer", {
-//          terrainProvider: Cesium.createWorldTerrain(),
+          terrainProvider: Cesium.createWorldTerrain(),
             imageryProvider : new Cesium.OpenStreetMapImageryProvider({
                 url : 'https://a.tile.openstreetmap.org/'
             }),
         });
           
           
-          var position = Cesium.Cartesian3.fromDegrees(-123.11531, 49.28342, 10);
-          var heading = Cesium.Math.toRadians(315);//could you please adjust here approx
+          var position = Cesium.Cartesian3.fromDegrees(-123.115485, 49.28330, 10);
+//          var position = Cesium.Cartesian3.fromDegrees(-123.11531, 49.28342, 10);
+          var heading = Cesium.Math.toRadians(224);//could you please adjust here approx
           var pitch = 0;
           var roll = 0;
           var hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
@@ -100,7 +101,7 @@
             hpr_fl
           );
           
-          var entity1 = viewer.entities.add({
+         /* var entity1 = viewer.entities.add({
             position : position_fl,
               orientation: orientation_fl,
             model : {
@@ -108,7 +109,7 @@
             },
               id:"building570_floor",
               show:false
-          });
+          });*/
 //          window.addEventListener("load", () => {
 //              116527969
             var options = [];
@@ -164,22 +165,29 @@
             console.log(pickEntity(cartesian));
         });*/
 
-          /*handler.setInputAction(function (movement) {// this is for click the obj
+          handler.setInputAction(function (movement) {
             var pick = viewer.scene.pick(movement.position);
             if (Cesium.defined(pick) && pick.id) {
                 if(pick.id._id == "building570"){
-                    pick.id._show = false;
-                    console.log(viewer.entities.getById("building570_floor"));
-                    viewer.entities.getById("building570_floor").show = true;
                     var options = [];
                     options.duration=3.0;
-                    viewer.flyTo(viewer.entities.getById("building570_floor"),options);
-//                    debugger;
+                    viewer.flyTo(viewer.entities.getById("building570"),options);
                 }
             }else{
                 console.log("no");
             }
-        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);*/
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+          handler.setInputAction(function (movement) {
+            var pick = viewer.scene.pick(movement.position);
+            if (Cesium.defined(pick) && pick.id) {
+                if(pick.id._id == "building570"){
+//                    window.location = "https://localhost/freelancer/nikolay/cesium2/Apps/CesiumViewer/floor/";
+                    window.open('https://localhost/freelancer/nikolay/cesium2/Apps/CesiumViewer/floor/', '_blank');
+                }
+            }else{
+                console.log("no");
+            }
+        }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK );
           
           /*function pickEntity(windowPosition) {
           var picked = viewer.scene.pick(windowPosition);
