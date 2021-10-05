@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
+    <meta name="description" content="Use 3D Tiles Styling to assign colors based on material or find all office buildings." />
+    <meta name="cesium-sandcastle-labels" content="Beginner, 3D Tiles" />
+    <title>Sebastian 3d buildings</title>
+    <script type="text/javascript" src="js/Sandcastle-header.js"></script>
+    <script type="text/javascript" src="js/Cesium.js" nomodule></script>
+    <script type="module" src="js/load-cesium-es6.js"></script>
+    <style>
+        .cesium-baseLayerPicker-item:nth-child(n + 4),
+        .cesium-baseLayerPicker-category:nth-child(2) {
+            display: none;
+        }
+        /*a.geotrcker {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    background: red;
+    color: white;
+    padding: 10px;
+}*/
+    </style>
+</head>
+
+<body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
+    <style>
+        @import url(css/bucket.css);
+
+    </style>
+    <div id="cesiumContainer" class="fullSize"></div>
+    <div id="loadingOverlay">
+        <h1>Loading...</h1>
+    </div>
+    <div id="toolbar">
+        <select class="cesium-button" id="dropdown">
+<!--            <option value="0">Color By Building Material</option>-->
+            <option value="5">Highlight commercial buildings</option>
+            <option value="2">Highlight Residential Buildings</option>
+            <option value="1">Color By Distance To Selected Location</option>
+<!--            <option value="3">Show Office Buildings Only</option>-->
+<!--            <option value="4">Show Apartment Buildings Only</option>-->
+            
+        </select>
+        <table class="infoPanel">
+            <tbody>
+                <tr>
+                    <td>Click on a building to select as the central location</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <script id="cesium_sandcastle_script">
+        function startup(Cesium) {
+            "use strict";
+            //Sandcastle_Begin
+            Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI2MDc5M2JjYy0wYzk1LTRlYmYtYmQxMy03MGM0MjhjMTA1MmYiLCJpZCI6NjMyNTcsImlhdCI6MTYyNzk5NDQwM30.UyAgckf7VSlBiA6ECDJ_yPwOoSRRJ955gGfvEB5VpEA";
+            var geocodepos = [], geocodeid, geolat, geolon;
+
+            // How to use the 3D Tiles Styling language to style individual features, like buildings.
+            // Styling language specification: https://github.com/CesiumGS/3d-tiles/tree/master/specification/Styling
+            //          console.log("viewer.html");
+            var viewer = new Cesium.Viewer("cesiumContainer", {
+                terrainProvider: Cesium.createWorldTerrain(),
+                imageryProvider: new Cesium.OpenStreetMapImageryProvider({
+                    url: 'https://a.tile.openstreetmap.org/'
+                }),
+                geocoder: new OpenStreetMapNominatimGeocoder(),
+//                geocoder: new OpenStreetMapNominatimGeocoder(),
+                timeline: false,
+                animation: false,
+                sceneModePicker: false,
+                terrainProviderViewModels: [],
+                //            imageryProviderViewModels:["ArcGisMapServerImageryProvider"]
+                //            baseLayerPicker
+            });
+            viewer._cesiumWidget._creditContainer.parentNode.removeChild(
+                viewer._cesiumWidget._creditContainer);
+            viewer.homeButton.viewModel.command.beforeExecute.addEventListener(function(e) {
+                e.cancel = true;
+                var options = [];
+                options.duration = 3.0;
+                options.offset = new Cesium.HeadingPitchRange(Cesium.Math.toRadians(-80), Cesium.Math.toRadians(-25), Cesium.Math.toRadians(120000));
+                //Where you want to fly	
+                /*viewer.camera.flyTo({
+				destination: Cesium.Cartesian3.fromDegrees(-123.11535, 49.28267, 13),
+                offset:options.offset
+			});*/
+                viewer.flyTo(viewer.entities.getById("building570"), options);
+
+
+
+            });
+
+
+
+
+
+
+
+
+
+            var geotimm = null;
+
+            var callamnt = 0;
+            function OpenStreetMapNominatimGeocoder() {}
+//            OpenStreetMapNominatimGeocoder.prototype.geocode = function (input) {
+//              var endpoint = "https://nominatim.openstreetmap.org/search";
+//              var resource = new Cesium.Resource({
+//                url: endpoint,
+//                queryParameters: {
+//                  format: "json",
+//                  q: input,
+//                },
+//              });
+//
+//              return resource.fetchJson().then(function (results) {
+//                var bboxDegrees;
+//                return results.map(function (resultObject) {
+//                  bboxDegrees = resultObject.boundingbox;
+//                    console.log(resultObject);
+//                    console.log("resultObject");
+//                  return {
+//                    displayName: resultObject.display_name,
+//                    destination: Cesium.Rectangle.fromDegrees(
+//                      bboxDegrees[2],
+//                      bboxDegrees[0],
+//                      bboxDegrees[3],
+//                      bboxDegrees[1]
+//                    ),
+//                  };
+//                });
+//              });
+//            };
+            OpenStreetMapNominatimGeocoder.prototype.geocode = function(input) {
+
+                document.body.classList.add("fromgeo");
+                /*clearTimeout(geotimm);
+                geotimm = setTimeout(function() {
+                    if(document.getElementsByClassName("fromgeo").length > 0){
+                    document.getElementsByClassName("fromgeo")[0].classList.remove("fromgeo");}
+                }, 4000);*/
+                //console.log(viewer.geocoder._viewModel.destinationFound);debugger;
+                var endpoint = "https://nominatim.openstreetmap.org/search";
+                var resource = new Cesium.Resource({
+                    url: endpoint,
+                    queryParameters: {
+                        format: "json",
+                        q: input,
+                    },
+                });
+
+                return resource.fetchJson().then(function(results) {
+                    console.log("############################");
+//                    var arrvl = results;
+//                    if(arrvl.length > 0){
+//                        arrvl.forEach(function( value,  key) {
+//                          console.log(value.osm_id);
+//                        });
+////                        jQuery.each( arrvl, function( key, value ) {
+////                          console.log(value);
+////                        });
+//                    }
+//                    console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+//                    debugger;
+//                    callamnt=0;
+                    var bboxDegrees;
+
+                    //console.log(viewer.geocoder._viewModel.destinationFound);debugger;
+                    /*if((results[0].osm_id && viewer.entities.getById(results[0].osm_id) || results[0].osm_id == "138646508")){
+                          console.log("resultObject.osm_id : " + results[0].osm_id);
+                          var options = [];
+                          options.duration=3.0;
+                          options.offset = new Cesium.HeadingPitchRange(Cesium.Math.toRadians(-80), Cesium.Math.toRadians(-20), Cesium.Math.toRadians(13000));
+                          if(results[0].osm_id == "138646508" ){
+                              debugger;
+                              viewer.flyTo(viewer.entities.getById("building570"),options);
+                              
+                          }else{
+                              debugger;
+//                              viewer.flyTo(viewer.entities.getById("building570"),options);
+                              viewer.flyTo(viewer.entities.getById(results[0].osm_id),options);
+                          }
+                          debugger;
+                          return false;
+                      }
+                  debugger;*/
+                    return results.map(function(resultObject) {
+
+                        //console.log(viewer.geocoder._viewModel.destinationFound);debugger;
+                        bboxDegrees = resultObject.boundingbox;
+                        geocodepos = bboxDegrees;
+                        callamnt++
+//                        if(callamnt > 1){
+                        if(resultObject.osm_type == "way"){
+                            geocodeid = resultObject.osm_id;
+                            if(!viewer.entities.getById(geocodeid)){
+                                resultObject.id = geocodeid;
+                            }
+                            console.log("-- resultObject --");
+                            console.log(resultObject);
+                            console.log("-- "+geocodeid+" --");
+                            geolat = parseFloat(resultObject.lat);
+                            geolon = parseFloat(resultObject.lon);
+                            if(geocodeid == 138646508)geocodeid="building570";
+                            if(geocodeid == 75718012)geocodeid="thegateway4710";
+                            document.body.setAttribute("geoval", bboxDegrees);
+                        }
+                        
+                        
+//                        console.log(resultObject);
+                        //                      debugger;
+                        return {
+                            displayName: resultObject.display_name,
+                            destination: Cesium.Rectangle.fromDegrees(
+                                bboxDegrees[2],
+                                bboxDegrees[0],
+                                bboxDegrees[3],
+                                bboxDegrees[1]
+                            ),
+                            /*destination: Cesium.Cartesian3.fromDegrees(
+                                bboxDegrees[2],
+                                bboxDegrees[0],
+                                bboxDegrees[3]
+                            ),*/
+                        };
+                        
+                        
+                    });
+                });
+            };
+
+            
+            
+
+
+            var position = Cesium.Cartesian3.fromDegrees(-123.11535, 49.28267, 13);
+            //          var position = Cesium.Cartesian3.fromDegrees(-123.11546, 49.28259, 10);
+            //          var position = Cesium.Cartesian3.fromDegrees(-123.11531, 49.28342, 10);
+            var heading = Cesium.Math.toRadians(44); //could you please adjust here approx
+            var pitch = 0;
+            var roll = 0;
+            var hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+            var orientation = Cesium.Transforms.headingPitchRollQuaternion(
+                position,
+                hpr
+            );
+            var r = new Cesium.TranslationRotationScale(Cesium.Cartesian3.ZERO, Cesium.Quaternion.IDENTITY, new Cesium.Cartesian3(1, 1, 10000));
+            var entity = viewer.entities.add({
+                position: position,
+                orientation: orientation,
+                model: {
+                    uri: '570Dunsmuir2.glb'
+                    //                uri : 'dummy.glb'
+                },
+                id: "building570",
+                /*nodeTransformations: {
+                    CLR1400000010703000000_54:{
+                        scale: new Cesium.Cartesian3(2, 2, 2)
+                    }
+                    'CLR1400000010703000000_54': r
+                }*/
+            });
+            var position = Cesium.Cartesian3.fromDegrees(-123.00114, 49.22597, 105);
+            var heading = Cesium.Math.toRadians(0); //could you please adjust here approx
+            var pitch = 0;
+            var roll = 0;
+            var hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+            var orientation = Cesium.Transforms.headingPitchRollQuaternion(
+                position,
+                hpr
+            );
+            var r = new Cesium.TranslationRotationScale(Cesium.Cartesian3.ZERO, Cesium.Quaternion.IDENTITY, new Cesium.Cartesian3(1, 1, 10000));
+            
+            var maxfloor = 28;
+            var array4710_building = ["1","2","3"];
+            var array4710_targetb = ["","","","","","","","","","","","","","","","","","","","","","","","","","yes","",""];
+            for (let i = 0; i < maxfloor; i++) {
+                var idd = "4710 The Kingsway";
+                if(i>0){
+                    idd = "4710 The Kingsway - Floor " + (i+1);
+                }
+                var tar_b = array4710_targetb[i];
+                var color = Cesium.Color["YELLOW"];
+//                var color = Cesium.Color["WHITE"];
+              var entity = viewer.entities.add({
+                    position: position,
+                    orientation: orientation,
+                    model: {
+                        uri: 'buildings/4710/floor'+(i+1)+'.glb',
+//                          color:Cesium.Color.fromAlpha(color, 1),
+//                          colorBlendMode:Cesium.ColorBlendMode["HIGHLIGHT"],
+//                          colorBlendMode:Cesium.ColorBlendMode["MIX"],
+//                          colorBlendAmount: 0.3,
+                        
+                    },
+                    id: idd,
+                    targetB:tar_b
+                });
+            }
+            array4710_building.forEach(function( value,  key) {
+              console.log(key + " : " +value);
+            });
+//            var entity = viewer.entities.add({
+//                position: position,
+//                orientation: orientation,
+//                model: {
+//                    uri: '4710TheKinsway.glb'
+//                },
+//                id: "4710 The Kingsway",
+//            });
+//4710-the-kingsway
+
+
+            var classifcationTilesetUrl = "tileset.json";
+            // A b3dm tileset used to classify the photogrammetry tileset
+            var classificationTileset = new Cesium.Cesium3DTileset({
+                url: classifcationTilesetUrl,
+                classificationType: Cesium.ClassificationType.CESIUM_3D_TILE,
+            });
+            classificationTileset.style = new Cesium.Cesium3DTileStyle({
+                color: "rgba(255, 0, 0, 0.5)",
+            });
+            viewer.scene.primitives.add(classificationTileset);
+            //          console.log(viewer);
+            //          viewer.entities.removeById(138646508);
+
+
+
+            //          var position_fl = Cesium.Cartesian3.fromDegrees(-123.11567, 49.28375, 0);
+            var position_fl = Cesium.Cartesian3.fromDegrees(-123.11531, 49.28342, 0);
+            var heading_fl = Cesium.Math.toRadians(0); //could you please adjust here approx
+            var hpr_fl = new Cesium.HeadingPitchRoll(heading_fl, pitch, roll);
+            var orientation_fl = Cesium.Transforms.headingPitchRollQuaternion(
+                position_fl,
+                hpr_fl
+            );
+            
+            /*viewer.entities.add({
+                position: Cesium.Cartesian3.fromDegrees(-123.115, 49.283, 18),
+                point: {
+                    color: Cesium.Color.YELLOW,
+                    outlineColor: {
+                        rgba: [255, 0, 0, 128],
+                    },
+                    outlineWidth: 15,
+                    pixelSize: 15,
+                },
+            });*/
+            var pinBuilder = new Cesium.PinBuilder();
+            var questionPin = viewer.entities.add({
+              name: "Question mark",
+              position: Cesium.Cartesian3.fromDegrees(-123.115, 49.283, 18),
+              billboard: {
+                image: pinBuilder.fromText("?", Cesium.Color.BLACK, 48).toDataURL(),
+                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+              },
+            });
+            
+            var url = Cesium.buildModuleUrl("Assets/Textures/maki/grocery.png");
+            var groceryPin = Cesium.when(
+                pinBuilder.fromUrl(url, Cesium.Color.GREEN, 48),
+                function (canvas) {
+                    return viewer.entities.add({
+                        name: "Grocery store",
+                        position: Cesium.Cartesian3.fromDegrees(-123.11531, 49.28342, 18),
+                        billboard: {
+                            image: canvas.toDataURL(),
+                            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                        },
+                    });
+                }
+            );
+            
+            
+//            for point adding start here #####
+            var labelEntity = viewer.entities.add({
+                label : {
+                    show : false,
+                    showBackground : true,
+                    font : '14px monospace',
+                    horizontalOrigin : Cesium.HorizontalOrigin.LEFT,
+                    verticalOrigin : Cesium.VerticalOrigin.TOP,
+                    pixelOffset : new Cesium.Cartesian2(15, 0)
+                }
+            });
+            var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+            handler.setInputAction(function(movement) {
+                var foundPosition = false;
+                var scene = viewer.scene;
+                var pickedObject = scene.pick(movement.endPosition);
+                if (scene.pickPositionSupported) {
+                    if (scene.mode === Cesium.SceneMode.SCENE3D) {
+                        var cartesian = viewer.scene.pickPosition(movement.endPosition);
+
+                        if (Cesium.defined(cartesian)) {
+                            var cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+                            var longitudeString = Cesium.Math.toDegrees(cartographic.longitude).toFixed(3);
+                            var latitudeString = Cesium.Math.toDegrees(cartographic.latitude).toFixed(3);
+                            var heightString = cartographic.height.toFixed(2);
+
+                            labelEntity.position = cartesian;
+                            labelEntity.label.show = true;
+                            labelEntity.label.text =
+                                'Lon: ' + ('   ' + longitudeString).slice(-8) + '\u00B0' +
+                                '\nLat: ' + ('   ' + latitudeString).slice(-8) + '\u00B0' +
+                                '\nAlt: ' + ('   ' + heightString).slice(-7) + 'm';
+
+                            var camera = scene.camera;
+                            labelEntity.label.eyeOffset = new Cesium.Cartesian3(0.0, 0.0, camera.frustum.near * 1.5 - Cesium.Cartesian3.distance(cartesian, camera.position));
+
+                            foundPosition = true;
+                            if(pickedObject && pickedObject.id){
+                                if(pickedObject.id._id.indexOf("4710 The Kingsway") >= 0){//4710 The Kingsway - Floor 5
+                                    console.log(pickedObject.id._id);
+//                                    console.log(pickedObject.primitive.colorBlendAmount);
+                                    var color = Cesium.Color["YELLOW"];
+                                    pickedObject.primitive.color = Cesium.Color.fromAlpha(color, 1);
+                                    pickedObject.primitive.colorBlendAmount = 0.3;
+                                    pickedObject.primitive.colorBlendMode = Cesium.ColorBlendMode["MIX"];
+//                          colorBlendAmount: 0.3,
+//                                    console.log(pickedObject);
+                                }
+                            }
+//                            if(pickedObject){
+//                                osmBuildingsTileset.style = new Cesium.Cesium3DTileStyle({
+////                                    color: {
+////                                        /*conditions: [
+////                                            ["${height} >= 10", "color('purple')"],
+////                                            ["${height} >= 6", "color('red')"],
+////                                            ["${height} >= 5", "color('orange')"],
+////                                            ["true", "color('blue')"],
+////                                        ],*/
+////                                        /*conditions: [
+////                                            [
+////                                                "${feature['building']} === 'office' || ${feature['building']} === 'commercial'",
+////                                                "color('green', 0.9)",
+////                                            ],
+////                                            [true, "color('white')"],
+////                                        ],*/
+////                                    },
+//                                });
+//                            }
+      
+      
+      
+      
+                        }
+                    } else if (!sceneModeWarningPosted) {
+                        sceneModeWarningPosted = true;
+                        console.log("pickPosition is currently only supported in 3D mode.");
+                    }
+                }
+
+                if (!foundPosition) {
+                    labelEntity.label.show = false;
+                }
+            }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+//            for point adding end here
+            
+            
+            
+            /* var entity1 = viewer.entities.add({
+               position : position_fl,
+                 orientation: orientation_fl,
+               model : {
+                   uri : '570_Dunsmuir_etaj.glb'
+               },
+                 id:"building570_floor",
+                 show:false
+             });*/
+            //          window.addEventListener("load", () => {
+            //              116527969
+
+
+            /*var position1 = Cesium.Cartesian3.fromDegrees(-123.115485, 49.28330, 10);
+//          var position1 = Cesium.Cartesian3.fromDegrees(-123.11531, 49.28342, 10);
+          var heading1 = Cesium.Math.toRadians(224);//could you please adjust here approx
+          var pitch1 = 0;
+          var roll1 = 0;
+          var hpr1 = new Cesium.headingPitchRoll(heading1, pitch1, roll1);
+          var orientation1 = Cesium.Transforms.headingPitchRollQuaternion(
+            position1,
+            hpr1
+          );*/
+
+
+
+            var options = [];
+            options.duration = 3.0;
+            //          options.orientation = orientation1;
+            //          options.offset = new Cesium.HeadingPitchRange(heading, pitch, range)
+            //          options.offset = new Cesium.HeadingPitchRange(0, -0.2, 0);
+            options.offset = new Cesium.HeadingPitchRange(Cesium.Math.toRadians(-80), Cesium.Math.toRadians(-20), Cesium.Math.toRadians(13000));
+            viewer.flyTo(viewer.entities.getById("building570"), options);
+
+
+
+
+
+
+
+            /*var center = Cesium.Cartesian3.fromDegrees(-123.11535, 49.28267, 13);
+var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(center);
+          
+          setTimeout(function(){
+              
+          
+          var treeHighlight1 = viewer.scene.primitives.add(
+              new Cesium.ClassificationPrimitive({
+                geometryInstances: new Cesium.GeometryInstance({
+                    
+                    geometry: new Cesium.RectangleGeometry({
+//                    radii: new Cesium.Cartesian3(40, 50, 20.0),
+                      ellipsoid : Cesium.Ellipsoid.WGS84,
+  rectangle : Cesium.Rectangle.fromDegrees(-123.11535, 49.28267, -123.12535, 49.28267),
+  height : 10000.0
+                  }),
+                    
+                  geometry: new Cesium.EllipsoidGeometry({
+                    radii: new Cesium.Cartesian3(400, 500, 200.0),
+                  }),
+                  modelMatrix: modelMatrix,
+                  attributes: {
+                    color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+                      Cesium.Color.fromCssColorString("#F26419").withAlpha(0.5)
+                    ),
+                    show: new Cesium.ShowGeometryInstanceAttribute(true),
+                  },
+                  id: "volume 1",
+                }),
+                classificationType: Cesium.ClassificationType.CESIUM_3D_TILE,
+              })
+            );
+              },3000);
+          
+          
+          function invertClassification(checked) {
+              if (checked && !viewer.scene.invertClassificationSupported) {
+                window.alert("This browser does not support invert classification");
+              }
+
+              viewer.scene.invertClassification = checked;
+              viewer.scene.invertClassificationColor = new Cesium.Color(
+                0.25,
+                0.25,
+                0.25,
+                1.0
+              );
+
+              buildingHighlight.getGeometryInstanceAttributes(
+                "volume"
+              ).show = Cesium.ShowGeometryInstanceAttribute.toValue(!checked);
+              treeHighlight1.getGeometryInstanceAttributes(
+                "volume 1"
+              ).show = Cesium.ShowGeometryInstanceAttribute.toValue(!checked);
+              treeHighlight2.getGeometryInstanceAttributes(
+                "volume 2"
+              ).show = Cesium.ShowGeometryInstanceAttribute.toValue(!checked);
+              treeHighlight3.getGeometryInstanceAttributes(
+                "volume 3"
+              ).show = Cesium.ShowGeometryInstanceAttribute.toValue(!checked);
+              treeHighlight4.getGeometryInstanceAttributes(
+                "volume 4"
+              ).show = Cesium.ShowGeometryInstanceAttribute.toValue(!checked);
+            }*/
+
+
+
+            //          })
+
+            /*//          window.addEventListener("load", () => {
+                    document.querySelector("#cesiumContainer .cesium-widget canvas").addEventListener("click", function(e){
+                            var ellipsoid = viewer.scene.globe.ellipsoid;
+                    // Mouse over the globe to see the cartographic position 
+                    var cartesian = viewer.camera.pickEllipsoid(new Cesium.Cartesian3(e.clientX, e.clientY), ellipsoid);
+                        
+                        console.log(cartesian);
+                        console.log(pickEntity(cartesian));
+                    });
+            //        });
+                    function pickEntity(windowPosition) {
+                      var picked = viewer.scene.pick(windowPosition);
+                      if (picked) {
+                          return "yes";
+            //              debugger;
+                        var id = Cesium.defaultValue(picked.id, picked.primitive.id);
+                        if (id instanceof Cesium.Entity) {
+                          return id;
+                        }
+                      }
+                      return "no";
+                    };*/
+
+
+            /*var entity1 = viewer.entities.add({ // not working
+              position : Cesium.Cartesian3.fromDegrees(-123.11567, 49.28375, 0),
+              model : {
+                  uri : '40East5thAve.FBX'
+              }
+            });*/
+            /*var entity1 = viewer.entities.add({
+              position : Cesium.Cartesian3.fromDegrees(-123.11567, 49.28375, 0),
+              model : {
+                  uri : '570_Dunsmuir_notok.gltf'
+              }
+            });*/
+            //          console.log(entity);
+            //viewer.trackedEntity = entity1;
+            var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+
+            /*document.querySelector("#cesiumContainer .cesium-widget canvas").addEventListener("click", function(e){
+                var ellipsoid = viewer.scene.globe.ellipsoid;
+                var cartesian = viewer.camera.pickEllipsoid(new Cesium.Cartesian3(e.clientX, e.clientY), ellipsoid);
+                console.log(cartesian);
+                console.log(pickEntity(cartesian));
+            });*/
+
+            handler.setInputAction(function(movement) {
+                var pick = viewer.scene.pick(movement.position);
+                if (Cesium.defined(pick) && pick.id) {
+                    if (pick.id._id == "building570") {
+                        var options = [];
+                        options.duration = 3.0;
+                        options.orientation = {
+                            heading: Cesium.Math.toRadians(175.0),
+                            pitch: Cesium.Math.toRadians(-35.0),
+                            roll: 0.0
+                        };
+                        options.offset = new Cesium.HeadingPitchRange(Cesium.Math.toRadians(-80), Cesium.Math.toRadians(-20), Cesium.Math.toRadians(6000));
+                        viewer.flyTo(viewer.entities.getById("building570"), options);
+                    }
+                } else {
+//                    console.log("no");
+                }
+            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+            handler.setInputAction(function(movement) {
+                var pick = viewer.scene.pick(movement.position);
+                if (Cesium.defined(pick) && pick.id) {
+                    if (pick.id._id == "building570") {
+                        //                    window.location = "https://localhost/freelancer/nikolay/cesium2/Apps/CesiumViewer/floor/";
+                        window.open('https://localhost/freelancer/nikolay/cesium2/Apps/CesiumViewer/floor/', '_blank');
+                    }
+                } else {
+                    console.log("no");
+                }
+            }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+
+            /*function pickEntity(windowPosition) {
+          var picked = viewer.scene.pick(windowPosition);
+          if (picked) {
+              return "yes";
+            var id = Cesium.defaultValue(picked.id, picked.primitive.id);
+            if (id instanceof Cesium.Entity) {
+              return id;
+            }
+          }
+          return "no";
+        };*/
+
+
+
+
+
+
+            // Add Cesium OSM buildings to the scene as our example 3D Tileset.
+            var osmBuildingsTileset = Cesium.createOsmBuildings();
+            //          osmBuildingsTileset.remove(138646508)
+
+            viewer.scene.primitives.add(osmBuildingsTileset);
+            //          console.log(osmBuildingsTileset);
+
+            setTimeout(function() {
+                osmBuildingsTileset.style = new Cesium.Cesium3DTileStyle({
+                    show: {
+                        conditions: [
+                            // Any building that has this elementId will have `show = false`.
+                            ['${elementId} === 138646508', false],
+                            ['${elementId} === 75718012', false],
+                            //['${elementId} === 8414158501', false],
+                            // If a building does not have one of these elementIds, set `show = true`.
+                            [true, true]
+                        ]
+                    }
+                });
+            }, 3000)
+
+            /*viewer.entities.add({
+              position: Cesium.Cartesian3.fromDegrees(49.28375, -123.11567),
+              name: "570 8888",
+              model:{
+              uri: "570_Dunsmuir_etaj.glb"
+              }
+              })*/
+
+
+
+
+
+
+            // Set the initial camera to look at Seattle
+            /*viewer.scene.camera.setView({
+              destination: Cesium.Cartesian3.fromDegrees(-123.0002, 49.2255, 270),
+              orientation: {
+                heading: Cesium.Math.toRadians(10),
+                pitch: Cesium.Math.toRadians(-10),
+              },
+            });*/
+            viewer.scene.camera.setView({
+                destination: Cesium.Cartesian3.fromDegrees(-123.0002, 49.2255, 270),
+                orientation: {
+                    heading: Cesium.Math.toRadians(10),
+                    pitch: Cesium.Math.toRadians(-10),
+                },
+            });
+            var offset1 = new Cesium.HeadingPitchRange(Cesium.Math.toRadians(-80), Cesium.Math.toRadians(-35), Cesium.Math.toRadians(14000));
+            var idd = 0;
+            var clickHandler = viewer.screenSpaceEventHandler.getInputAction(
+//                viewer.selectedEntity = viewer.entities.getById(geocodeid);
+              Cesium.ScreenSpaceEventType.LEFT_CLICK
+            );
+            
+            
+            function triggeo() {
+//                return false;
+                idd++;
+                
+//                geocodeid
+//                -123.11535, 49.28267, 13
+                var d1 = (parseFloat(geocodepos[2]) - parseFloat(geocodepos[2]))/2;
+                var d2 = (parseFloat(geocodepos[0]) - parseFloat(geocodepos[1]))/2;
+//                var l1 = (parseFloat(geocodepos[2]) + parseFloat(geocodepos[2]))/2;
+//                var l2 = (parseFloat(geocodepos[0]) + parseFloat(geocodepos[1]))/2;
+                var l1 = geolon;
+                var l2 = geolat;
+//                console.log(l1 +", "+l2);
+//                console.log(d1 +", "+d2);
+//                debugger;
+//                var l1 = (parseFloat(geocodepos[2]) + 0.000000000000000000000001);
+//                var l2 = (parseFloat(geocodepos[0]) + 0.000000000000000000000001);debugger;
+//                var l1 = (parseFloat(geocodepos[2]) + (0.0005018999999890639 * parseFloat(geocodepos[2]) / -123.11535));
+//                var l2 = (parseFloat(geocodepos[0]) + (0.0003370000000018081 * parseFloat(geocodepos[0]) / 49.28267));
+               
+                //alert(geocodeid);
+                options.duration = 3.0;
+                options.complete = function(){
+                    //alert("completed");
+                };
+                options.offset = new Cesium.HeadingPitchRange(Cesium.Math.toRadians(-90), Cesium.Math.toRadians(-30), Cesium.Math.toRadians(30000));
+                if(viewer.entities.getById(geocodeid)){
+                    console.log("yes");
+                    //alert("yes");
+                    viewer.flyTo(viewer.entities.getById(geocodeid), options);
+                }else{
+                    console.log("no");
+                     var e = viewer.entities.add({
+                    id:"test"+idd,
+                    position: Cesium.Cartesian3.fromDegrees(l1, l2, 15),
+                    point: {
+                        verticalOrigin: Cesium.VerticalOrigin.BOTTOM
+                    },
+//                    duration: 3.0,
+//                    offset : new Cesium.HeadingPitchRange(Cesium.Math.toRadians(-80), Cesium.Math.toRadians(-25), Cesium.Math.toRadians(120000)),
+                });
+                    options.offset = new Cesium.HeadingPitchRange(Cesium.Math.toRadians(-90), Cesium.Math.toRadians(-30), Cesium.Math.toRadians(30000));
+//                    viewer.flyTo(viewer.entities.getById("test"+idd),options);
+//                    viewer.flyTo(viewer.entities.getById("test"+idd));
+                    //debugger;
+                    
+                    
+                    var position = Cesium.Cartesian3.fromDegrees(geolon, geolat, 13);
+                    var heading = Cesium.Math.toRadians(44); //could you please adjust here approx
+                    var pitch = 0;
+                    var roll = 0;
+                    var hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+                    var orientation = Cesium.Transforms.headingPitchRollQuaternion(
+                        position,
+                        hpr
+                    );
+                    
+                    
+                    
+                    viewer.camera.flyTo({
+                        destination: Cesium.Cartesian3.fromDegrees(geolon, geolat, 1000),
+                        maximumHeight: 2000,
+//                        orientation: {
+//                            heading: Cesium.Math.toRadians(10),
+//                            pitch: Cesium.Math.toRadians(-10),
+//                          },
+//                        orientation: orientation,
+//                        offset: new Cesium.HeadingPitchRange(Cesium.Math.toRadians(-80), Cesium.Math.toRadians(-25), Cesium.Math.toRadians(120000))
+                    });
+//                    viewer.flyTo(viewer.entities.getById(geocodeid));
+                }
+                osmBuildingsTileset.style = new Cesium.Cesium3DTileStyle({
+                    defines: {
+                      distance:
+                        "distance(vec2(${feature['cesium#longitude']}, ${feature['cesium#latitude']}), vec2(" +
+                        l1 +
+                        "," +
+                        l2 +
+                        "))",
+                    },
+                    color: {
+                      conditions: [
+                        ['${elementId} === '+geocodeid+'', "color('yellow')"],
+//                        ["${distance} > 0.010", "color('green')"],
+//                        ["${distance} > 0.006", "color('yellow')"],
+//                        ["${distance} > 0.0001", "color('red')"],
+                        ["true", "color('white')"],
+                      ],
+                    },
+                    show: {
+                        conditions: [
+                            // Any building that has this elementId will have `show = false`.
+                            ['${elementId} === 138646508', false],
+                            ['${elementId} === 75718012', false],
+                            //['${elementId} === 8414158501', false],
+                            // If a building does not have one of these elementIds, set `show = true`.
+                            [true, true]
+                        ]
+                    }
+                  });
+//                console.log(viewer.entities.getById(geocodeid));
+                
+//                viewer.flyTo(viewer.entities.getById("test"+idd), options);
+//                viewer.zoomTo(e,offset1);
+                
+                
+                
+                position.x = window.innerWidth / 2;
+                position.y = window.innerHeight / 2;
+                
+//                clickHandler(getwindowCenter());
+                
+    //            console.log(getwindowCenter());
+                console.log("===========");
+                setTimeout(function(){
+                    console.log("===========");
+                var position = new Cesium.Cartesian2(viewer.container.clientWidth / 2, viewer.container.clientHeight / 2);
+                var ee = {position:position};
+//                    clickHandler(ee);
+                    viewer.selectedEntity = viewer.entities.getById(geocodeid);
+                },4000)
+
+            }
+            function getwindowCenter() {
+                var windowPosition = new Cesium.Cartesian2(viewer.container.clientWidth / 2, viewer.container.clientHeight / 2);
+                console.log(windowPosition);
+                return windowPosition;
+            }
+            var a = document.createElement('a');
+            a.setAttribute('href',"javascript:void(0)");
+            a.innerHTML = "";
+            a.className = "geotrcker";
+            document.getElementsByTagName('body')[0].appendChild(a);
+            document.getElementsByClassName("geotrcker")[0].onclick = function(){
+                triggeo();
+            }
+//            <a class="geotrcker" href="javascript:void(0)" onclick="triggeo()">aaaaa</a>
+//            document.body.innerHTML += '';
+            //          viewer.scene.camera.frustum.near = 1.0;
+            //viewer.scene.camera.frustum.far = 2.0;
+
+
+
+            // Styling functions
+
+            // Color by material checks for null values since not all
+            // buildings have the material property.
+            function colorByMaterial() {
+                osmBuildingsTileset.style = new Cesium.Cesium3DTileStyle({
+                    defines: {
+                        material: "${feature['building:material']}",
+                    },
+                    color: {
+                        conditions: [
+                            ["${material} === null", "color('white')"],
+                            ["${material} === 'glass'", "color('skyblue', 0.5)"],
+                            ["${material} === 'concrete'", "color('grey')"],
+                            ["${material} === 'brick'", "color('indianred')"],
+                            ["${material} === 'stone'", "color('lightslategrey')"],
+                            ["${material} === 'metal'", "color('lightgrey')"],
+                            ["${material} === 'steel'", "color('lightsteelblue')"],
+                            ["true", "color('white')"], // This is the else case
+                        ],
+                    },
+                    show: {
+                        conditions: [
+                            // Any building that has this elementId will have `show = false`.
+                            ['${elementId} === 138646508', false],
+                            ['${elementId} === 75718012', false],
+                            //['${elementId} === 8414158501', false],
+                            // If a building does not have one of these elementIds, set `show = true`.
+                            [true, true]
+                        ]
+                    }
+                });
+            }
+
+            function highlightAllResidentialBuildings() {
+                osmBuildingsTileset.style = new Cesium.Cesium3DTileStyle({
+                    color: {
+                        conditions: [
+                            [
+                                "${feature['building']} === 'apartments' || ${feature['building']} === 'residential'",
+                                "color('cyan', 0.9)",
+                            ],
+                            [true, "color('white')"],
+                        ],
+                    },
+                    show: {
+                        conditions: [
+                            // Any building that has this elementId will have `show = false`.
+                            ['${elementId} === 138646508', false],
+                            ['${elementId} === 75718012', false],
+                            //['${elementId} === 8414158501', false],
+                            // If a building does not have one of these elementIds, set `show = true`.
+                            [true, true]
+                        ]
+                    }
+                });
+            }
+            function highlightAllCommercialBuildings() {
+                osmBuildingsTileset.style = new Cesium.Cesium3DTileStyle({
+                    color: {
+                        conditions: [
+                            [
+                                "${feature['building']} === 'office' || ${feature['building']} === 'commercial'",
+                                "color('green', 0.9)",
+                            ],
+                            [true, "color('white')"],
+                        ],
+                    },
+                    show: {
+                        conditions: [
+                            // Any building that has this elementId will have `show = false`.
+                            ['${elementId} === 138646508', false],
+                            ['${elementId} === 75718012', false],
+                            //['${elementId} === 8414158501', false],
+                            // If a building does not have one of these elementIds, set `show = true`.
+                            [true, true]
+                        ]
+                    }
+                });
+            }
+
+            function showByBuildingType(buildingType) {
+                switch (buildingType) {
+                    case "office":
+                        osmBuildingsTileset.style = new Cesium.Cesium3DTileStyle({
+                            show: "${feature['building']} === 'office'",
+                        });
+                        break;
+                    case "apartments":
+                        osmBuildingsTileset.style = new Cesium.Cesium3DTileStyle({
+                            show: "${feature['building']} === 'apartments'",
+                        });
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            // Color the buildings based on their distance from a selected central location
+            function colorByDistanceToCoordinate(pickedLatitude, pickedLongitude) {
+                osmBuildingsTileset.style = new Cesium.Cesium3DTileStyle({
+                    defines: {
+                        distance: "distance(vec2(${feature['cesium#longitude']}, ${feature['cesium#latitude']}), vec2(" +
+                            pickedLongitude +
+                            "," +
+                            pickedLatitude +
+                            "))",
+                    },
+                    color: {
+                        conditions: [
+                            ["${distance} > 0.014", "color('blue')"],
+                            ["${distance} > 0.010", "color('green')"],
+                            ["${distance} > 0.006", "color('yellow')"],
+                            ["${distance} > 0.0001", "color('red')"],
+                            ["true", "color('white')"],
+                        ],
+                    },
+                    show: {
+                        conditions: [
+                            // Any building that has this elementId will have `show = false`.
+                            ['${elementId} === 138646508', false],
+                            ['${elementId} === 75718012', false],
+                            //['${elementId} === 8414158501', false],
+                            // If a building does not have one of these elementIds, set `show = true`.
+                            [true, true]
+                        ]
+                    }
+                });
+            }
+
+            // When dropdown option is not "Color By Distance To Selected Location",
+            // remove the left click input event for selecting a central location
+            function removeCoordinatePickingOnLeftClick() {
+                document.querySelector(".infoPanel").style.visibility = "hidden";
+                handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+            }
+
+            // Add event listeners to dropdown menu options
+            document.querySelector(".infoPanel").style.visibility = "hidden";
+            var menu = document.getElementById("dropdown");
+
+            /*menu.options[0].onselect = function() {
+                removeCoordinatePickingOnLeftClick();
+                colorByMaterial();
+            };*/
+            menu.options[0].onselect = function() {
+                removeCoordinatePickingOnLeftClick();
+                highlightAllCommercialBuildings();
+            };
+            menu.options[1].onselect = function() {
+                removeCoordinatePickingOnLeftClick();
+                highlightAllResidentialBuildings();
+            };
+            menu.options[2].onselect = function() {
+                // Default to Space Needle as the central location
+                colorByDistanceToCoordinate(47.62051, -122.34931);
+                console.log("opened 620");
+                document.querySelector(".infoPanel").style.visibility = "visible";
+                // Add left click input to select a building to and extract its coordinates
+                handler.setInputAction(function(movement) {
+                    viewer.selectedEntity = undefined;
+                    var pickedBuilding = viewer.scene.pick(movement.position);
+                    if (pickedBuilding) {
+                        var pickedLatitude = pickedBuilding.getProperty(
+                            "cesium#latitude"
+                        );
+                        var pickedLongitude = pickedBuilding.getProperty(
+                            "cesium#longitude"
+                        );
+                        colorByDistanceToCoordinate(pickedLatitude, pickedLongitude);
+                    }
+                }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+            };
+            /*menu.options[3].onselect = function() {
+                removeCoordinatePickingOnLeftClick();
+                showByBuildingType("office");
+            };
+            menu.options[4].onselect = function() {
+                removeCoordinatePickingOnLeftClick();
+                showByBuildingType("apartments");
+            };*/
+            
+
+            menu.onchange = function() {
+                Sandcastle.reset();
+                var item = menu.options[menu.selectedIndex];
+                if (item && typeof item.onselect === "function") {
+                    item.onselect();
+                }
+            };
+
+            colorByMaterial();
+
+            //Sandcastle_End
+            Sandcastle.finishedLoading();
+        }
+        if (typeof Cesium !== "undefined") {
+            window.startupCalled = true;
+            startup(Cesium);
+        }
+        
+            
+
+    </script>
+<!--    <a class="geotrcker" href="javascript:void(0)" onclick="triggeo()">aaaaa</a>-->
+</body>
+
+</html>
